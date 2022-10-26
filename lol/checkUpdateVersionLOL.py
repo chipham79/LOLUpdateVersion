@@ -5,6 +5,7 @@ from re import search
 from selenium.webdriver.common.by import By
 import maildemo
 import slack_bot
+import re
 
 
 def checkStringContainSubString(actualString, expString):
@@ -22,6 +23,7 @@ currentDateFormat = currentDate.strftime("%Y-%m-%d")
 # General Infor
 linkUpdateLOL = "https://lienminh.garena.vn/download"
 updateManualDesc = "//div[@class='section history']/div[@class='content']/div[@class='row'][1]/div[@class='column'][1]"
+XPATHRemind = "//div[@class='remind']"
 
 # Email Infor
 fromEmail = "notification.lmht@gmail.com"
@@ -43,14 +45,19 @@ driver.get(linkUpdateLOL)
 
 # Get string Cập Nhật Thủ Công
 desc = driver.find_element(By.XPATH, updateManualDesc).text
+remind = driver.find_element(By.XPATH, XPATHRemind).text
+find_date_remind = re.search(r'\d{2}/\d{2}/\d{4}', remind)
+convert_date_remind = datetime.strptime(
+    find_date_remind.group(), '%d/%m/%Y').date()
 
 # Check currentdate contain in update desctiption version
-result = checkStringContainSubString(currentDateFormat, desc)
+result1 = checkStringContainSubString(currentDateFormat, desc)
+result2 = checkStringContainSubString(currentDateFormat, convert_date_remind)
 
 # Khởi tạo ban đầu
 em = maildemo.EmailService(fromEmail, password, toEmail, subject, body)
 
-if(result):
+if(result1 or result2):
     slack_bot.sendMessageToSlack(body)
     print("Success")
 else:
